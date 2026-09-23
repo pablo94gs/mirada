@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#1b3a5c">
+<title>Mirada — escribir con la vista</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{
+  --ink:#12263a; --muted:#5b7186; --line:#d7e0e8; --bg:#eef3f7; --card:#ffffff;
+  --azul:#1b3a5c; --azul2:#2f6fa8; --verde:#0f8a4d; --rojo:#b4232a; --ambar:#c67c00;
+  --sel:#dff0ff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;
+  user-select:none;touch-action:manipulation}
+button{font-family:inherit;color:inherit}
+
+#app{display:flex;flex-direction:column;height:100%;padding:8px;gap:8px}
+
+/* ---------- texto escrito ---------- */
+#barra{display:flex;align-items:stretch;gap:8px;flex:0 0 auto}
+#texto{flex:1;background:var(--card);border:2px solid var(--line);border-radius:14px;
+  padding:10px 16px;font-size:clamp(22px,4.4vh,40px);font-weight:600;line-height:1.2;
+  min-height:clamp(52px,9vh,84px);display:flex;align-items:center;overflow:hidden;word-break:break-word}
+#texto .cursor{display:inline-block;width:3px;height:1em;background:var(--azul2);margin-left:3px;
+  animation:blink 1s steps(2) infinite;vertical-align:-.12em}
+@keyframes blink{50%{opacity:0}}
+#texto.vacio{color:#9fb0bf;font-weight:500}
+.mini{flex:0 0 auto;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.mini button{background:var(--card);border:2px solid var(--line);border-radius:12px;
+  padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer}
+#video{width:104px;border-radius:12px;transform:scaleX(-1);background:#000;display:none;flex:0 0 auto}
+#video.on{display:block}
+
+/* ---------- rejilla ---------- */
+#tira{display:flex;gap:8px;flex:0 0 auto;height:clamp(54px,9.5vh,92px)}
+#tira.oculta{display:none}
+#tira .celda{flex:1;min-width:0}
+#tira .celda .txt{font-size:clamp(12px,2.1vh,22px);letter-spacing:0;line-height:1.12}
+#rejilla{flex:1;display:grid;gap:8px;min-height:0}
+.celda{position:relative;background:var(--card);border:3px solid var(--line);border-radius:18px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  overflow:hidden;cursor:pointer;transition:border-color .12s,transform .12s}
+.celda .txt{position:relative;z-index:2;font-size:clamp(20px,5.2vh,52px);font-weight:800;letter-spacing:.04em;
+  text-align:center;padding:0 6px;line-height:1.08}
+.celda .sub{position:relative;z-index:2;font-size:clamp(10px,1.6vh,14px);font-weight:700;color:var(--muted);
+  letter-spacing:.12em;text-transform:uppercase}
+.celda .fill{position:absolute;inset:0;width:0;background:var(--sel);z-index:1;transition:width .06s linear}
+.celda.mirando{border-color:var(--azul2);transform:scale(1.015)}
+.celda.disparo{background:var(--azul2);border-color:var(--azul);}
+.celda.disparo .txt,.celda.disparo .sub{color:#fff}
+.celda.accion{background:#f7fafc}
+.celda.verde .txt{color:var(--verde)} .celda.rojo .txt{color:var(--rojo)}
+.celda.chica .txt{font-size:clamp(15px,2.6vh,26px);font-weight:700;letter-spacing:0}
+.celda.apagada{opacity:.45}
+.celda.alerta{background:var(--rojo);border-color:#7d1015}
+.celda.alerta .txt{color:#fff}
+@keyframes pulso{50%{box-shadow:0 0 0 7px rgba(180,35,42,.28)}}
+.celda.alerta{animation:pulso .9s ease-in-out infinite}
+
+/* ---------- cursor de mirada ---------- */
+#punto{position:fixed;width:26px;height:26px;border-radius:50%;background:rgba(47,111,168,.55);
+  border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.35);pointer-events:none;z-index:900;
+  transform:translate(-50%,-50%);transition:opacity .2s;display:none}
+#punto.on{display:block}
+
+/* ---------- avisos ---------- */
+#aviso{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:950;
+  background:var(--ambar);color:#fff;padding:9px 20px;border-radius:999px;font-weight:800;
+  font-size:15px;box-shadow:0 6px 18px rgba(0,0,0,.25);display:none}
+#aviso.on{display:block}
+
+/* ---------- capas ---------- */
+.capa{position:fixed;inset:0;background:rgba(238,243,247,.98);z-index:1000;
+  display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.capa.on{display:flex}
+.capa h1{font-size:clamp(24px,4.6vh,40px);margin:0 0 10px}
+.capa p{font-size:clamp(15px,2.4vh,20px);color:var(--muted);max-width:640px;line-height:1.5;margin:0 0 22px}
+.btn{background:var(--azul2);color:#fff;border:none;border-radius:14px;padding:16px 30px;
+  font-size:19px;font-weight:800;cursor:pointer;margin:6px}
+.btn.gris{background:#fff;color:var(--ink);border:2px solid var(--line)}
+
+/* calibración */
+#dianaCapa{background:#12263a}
+#diana{opacity:0;position:absolute;width:74px;height:74px;margin:-37px 0 0 -37px;border-radius:50%;transition:transform .5s ease, opacity .3s ease;
+  background:#fff;box-shadow:0 0 0 6px rgba(255,255,255,.25)}
+#diana .nucleo{position:absolute;inset:26px;border-radius:50%;background:var(--rojo)}
+#dianaTxt{position:absolute;left:0;right:0;top:34px;color:#fff;font-size:20px;font-weight:700}
+#dianaPaso{position:absolute;left:0;right:0;bottom:34px;color:#9fc4e4;font-size:16px;font-weight:600}
+#btnCancelarCal{position:absolute;right:26px;bottom:24px;padding:11px 22px;font-size:16px;margin:0}
+
+/* ajustes */
+#ajustes,#voz{justify-content:flex-start;overflow-y:auto;text-align:left;align-items:stretch}
+#ajustes .caja,#voz .caja{max-width:620px;margin:0 auto;width:100%}
+.fila{background:#fff;border:2px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.fila label{display:block;font-weight:800;margin-bottom:8px;font-size:16px}
+.fila .ayuda{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.4}
+.opts{display:flex;gap:8px;flex-wrap:wrap}
+.opts button{flex:1;min-width:90px;background:#f4f8fb;border:2px solid var(--line);border-radius:11px;
+  padding:11px 8px;font-weight:700;font-size:15px;cursor:pointer}
+.opts button.act{background:var(--azul2);color:#fff;border-color:var(--azul2)}
+input[type=range]{width:100%;height:36px}
+select{width:100%;padding:11px;border-radius:11px;border:2px solid var(--line);font-size:16px;background:#fff}
+.val{float:right;font-weight:800;color:var(--azul2)}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="barra">
+    <div id="texto" class="vacio">Mira una casilla para empezar<span class="cursor"></span></div>
+    <video id="video" autoplay playsinline muted></video>
+    <div class="mini">
+      <button id="btnCal">Calibrar</button>
+      <button id="btnAjustes">Ajustes</button>
+      <button id="btnPausa">Pausar</button>
+    </div>
+  </div>
+  <div id="tira"></div>
+  <div id="rejilla"></div>
+</div>
+
+<div id="punto"></div>
+<div id="aviso"></div>
+
+<div class="capa on" id="inicio">
+  <h1>Mirada</h1>
+  <p>Escribe con la vista y la app lo dice en voz alta.<br>
+     Necesita la cámara para ver hacia dónde miras. Nada sale de este dispositivo.</p>
+  <button class="btn" id="btnEmpezar">Empezar</button>
+  <button class="btn gris" id="btnAyuda">Cómo funciona</button>
+</div>
+
+<div class="capa" id="ayuda">
+  <h1>Cómo funciona</h1>
+  <p style="text-align:left">
+    <b>1.</b> Coloca el celular o tablet firme, a unos 40–60 cm de la cara, con buena luz de frente.<br><br>
+    <b>2.</b> Haz la calibración: mira los puntos que aparecen, uno por uno, <b>sin mover el cuerpo</b> — solo la mirada y, si puede, un giro leve de la cabeza.<br><br>
+    <b>3.</b> Para elegir, <b>mira una casilla y sostén la mirada</b>. Se va llenando de color; cuando se llena, se selecciona.<br><br>
+    <b>4.</b> Primero eliges un grupo de 5 letras, luego la letra. Abajo están espacio, borrar y hablar.<br><br>
+    <b>5.</b> Todo se puede tocar con el dedo también — útil para quien acompaña.
+  </p>
+  <button class="btn" id="btnCerrarAyuda">Entendido</button>
+</div>
+
+<div class="capa" id="dianaCapa">
+  <div id="dianaTxt">Mira el punto rojo</div>
+  <div id="diana"><div class="nucleo"></div></div>
+  <div id="dianaPaso"></div>
+  <button class="btn gris" id="btnCancelarCal">Cancelar</button>
+</div>
+
+<div class="capa" id="voz"></div>
+
+<div class="capa" id="ajustes">
+  <div class="caja">
+    <h1 style="margin-top:8px">Ajustes</h1>
+    <div class="fila">
+      <label>¿Con qué se apunta?</label>
+      <div class="opts" id="optModo">
+        <button data-v="cabeza">Cabeza</button>
+        <button data-v="ambos">Cabeza y ojos</button>
+        <button data-v="ojos">Solo ojos</button>
+      </div>
+      <div class="ayuda">Si la persona puede girar un poco la cabeza, <b>Cabeza</b> es mucho más preciso.
+        <b>Solo ojos</b> es para quien no puede moverla; exige mejor luz y más calibración.</div>
+    </div>
+    <div class="fila">
+      <label>Disposición del teclado</label>
+      <div class="opts" id="optDisp">
+        <button data-v="auto">Automática</button>
+        <button data-v="pasos">Dos pasos</button>
+        <button data-v="teclado">Teclado completo</button>
+      </div>
+      <div class="ayuda"><b>Dos pasos</b>: primero un grupo de 5 letras, luego la letra — casillas enormes, ideal en celular.
+        <b>Teclado completo</b>: las 27 letras a la vista, una sola mirada por letra — solo en tablet o iPad.
+        <b>Automática</b> elige según el tamaño de la pantalla.</div>
+    </div>
+    <div class="fila">
+      <label>Calibrar al abrir la app</label>
+      <div class="opts" id="optCalIni">
+        <button data-v="siempre">Siempre</button>
+        <button data-v="primera">Solo la primera vez</button>
+      </div>
+      <div class="ayuda"><b>Siempre</b> es lo recomendable: la persona nunca queda exactamente
+        en la misma posición dos días seguidos, y calibrar de nuevo compensa eso.</div>
+    </div>
+    <div class="fila">
+      <label>Detalle de la calibración</label>
+      <div class="opts" id="optPuntos">
+        <button data-v="18">18 puntos</button>
+        <button data-v="24">24 puntos</button>
+      </div>
+      <div class="ayuda">Más puntos = más precisión, pero la calibración tarda más
+        (18 ≈ 35 s, 24 ≈ 46 s). Los dos usan el ajuste fino
+        que combina mejor el giro de la cabeza con el movimiento del ojo. Los <b>18</b> se reparten en 6 columnas, las mismas del teclado completo, así que miden justo donde están las letras.</div>
+    </div>
+    <div class="fila">
+      <label>Tiempo para seleccionar <span class="val" id="vDwell">1,2 s</span></label>
+      <input type="range" id="rgDwell" min="500" max="3000" step="100">
+      <div class="ayuda">Cuánto hay que sostener la mirada. Más tiempo = menos errores.</div>
+    </div>
+    <div class="fila">
+      <label>Sensibilidad <span class="val" id="vGan">1,0</span></label>
+      <input type="range" id="rgGan" min="0.5" max="2.5" step="0.1">
+      <div class="ayuda">Si cuesta llegar a los bordes, súbela.</div>
+    </div>
+    <div class="fila">
+      <label>Suavizado <span class="val" id="vSua">medio</span></label>
+      <input type="range" id="rgSua" min="1" max="9" step="1">
+      <div class="ayuda">Más suavizado = el punto tiembla menos, pero responde más lento.</div>
+    </div>
+    <div class="fila">
+      <label>Confirmar parpadeando</label>
+      <div class="opts" id="optBlink">
+        <button data-v="0">No</button><button data-v="1">Sí</button>
+      </div>
+      <div class="ayuda">Si se activa, hay que mirar la casilla <b>y parpadear</b> para elegir.</div>
+    </div>
+    <div class="fila">
+      <label>Afinar solo mientras se usa</label>
+      <div class="opts" id="optAdapt">
+        <button data-v="0">No</button><button data-v="1">Sí</button>
+      </div>
+      <div class="ayuda">Cada selección acertada le sirve a la app para corregirse sola.
+        Compensa que la persona se mueva de posición con el rato.</div>
+    </div>
+    <div class="fila">
+      <label>Mi voz</label>
+      <div class="opts" id="optMiVoz">
+        <button data-v="0">Voz del sistema</button>
+        <button data-v="1">Usar mis grabaciones</button>
+      </div>
+      <div style="text-align:center;margin-top:10px">
+        <button class="btn gris" id="btnMiVoz" style="margin:0">Grabar mi voz</button>
+      </div>
+      <div class="ayuda">Graba frases y palabras con tu propia voz. Cuando lo que hay que decir
+        está grabado, suena tu voz; lo demás lo dice la voz del sistema.</div>
+    </div>
+    <div class="fila">
+      <label>Voz</label>
+      <select id="selVoz"></select>
+      <div class="ayuda">Voces del propio dispositivo. Si no hay ninguna en español, instálala desde los ajustes del sistema.</div>
+    </div>
+    <div class="fila">
+      <label>Leer cada letra al elegirla</label>
+      <div class="opts" id="optEco">
+        <button data-v="0">No</button><button data-v="1">Sí</button>
+      </div>
+    </div>
+    <div class="fila">
+      <label>Ver la cámara en pantalla</label>
+      <div class="opts" id="optCam">
+        <button data-v="0">No</button><button data-v="1">Sí</button>
+      </div>
+      <div class="ayuda">Útil para acomodar el encuadre al inicio.</div>
+    </div>
+    <div style="text-align:center;padding:6px 0 30px">
+      <button class="btn gris" id="btnRecal">Volver a calibrar</button>
+      <button class="btn" id="btnCerrarAjustes">Listo</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js" type="module"></script>
+</body>
+</html>
