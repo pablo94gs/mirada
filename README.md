@@ -106,14 +106,20 @@ historial vive en `localStorage` (`mirada.uso`).
 
 ## Frases rápidas
 
-**FRASES** abre tres categorías con 12 frases cada una:
+**FRASES** abre siete categorías de 12 frases cada una — 84 en total:
 
 - **Cotidianas** — Hola · Buen día · Buenas noches · ¿Cómo estás? · Muchas gracias · Por favor · Estoy cansado · Quiero dormir · Te quiero · Hasta luego · Espera un momento · Estoy bien
+- **Ánimo** — Estoy contento · Estoy triste · Estoy preocupado · Tengo miedo · Estoy frustrado · Estoy nervioso · Estoy tranquilo · Estoy aburrido · Necesito un abrazo · Quiero compañía · Quiero estar solo · Gracias por cuidarme
+- **Mi cuerpo** — Quiero cambiar de posición · Súbeme la cama · Bájame la cama · Acomódame la cabeza · Acomódame la almohada · Muéveme el brazo · Muéveme la pierna · Tengo un calambre · Me estoy resbalando · Tápame · Destápame · Quiero sentarme
 - **Comida** — Tengo hambre · Tengo sed · Está caliente · Está frío · Falta sal · Más azúcar · Está muy dulce · Quiero más · Ya no quiero · Está rico · Quiero agua · Más despacio
-- **Salud** — Me duele · No estoy cómodo · Necesito ayuda · Llama al doctor · Me falta el aire · Tengo frío · Tengo calor · Quiero cambiar de posición · Quiero ir al baño · Necesito mi medicina · Me pica · Estoy mareado
+- **Salud** — Me duele · Me duele mucho · Me falta el aire · Me atoré · Necesito aspiración · Tengo mucha saliva · Límpiame la boca · La máscara me aprieta · Necesito mi medicina · Llama al doctor · Estoy mareado · Me pica
+- **Entorno** — Prende / apaga la luz · Prende / apaga la tele · Sube / baja el volumen · Pon música · Abre / cierra la ventana · Llama a mi familia · Acércate · Dame mi teléfono
+- **Conversación** — Espera, estoy escribiendo · Déjame terminar · No entendiste · Repite por favor · Más despacio · Ya terminé · No sé · Quizá · Ahora no · Después · Estoy de acuerdo · No estoy de acuerdo
 
 Los dos huecos de la fila de arriba llevan **Sí** y **No** mientras no haya palabra
 que sugerir: son las dos respuestas que más falta hacen y quedan a una sola mirada.
+
+Para cambiarlas, editar `FRASES` al inicio de `app.js`.
 
 ## Modo «solo ojos»
 

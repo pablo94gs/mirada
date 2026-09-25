@@ -29,15 +29,43 @@ const GRUPOS = [
 ];
 const TECLADO = ("A B C D E F G H I J K L M N Ñ O P Q R S T U V W X Y Z").split(" ");
 const FRASES = {
+  // Lo que más se dice en el día. Va primero porque es lo que más se busca.
   "Cotidianas": ["Hola", "Buen día", "Buenas noches", "¿Cómo estás?", "Muchas gracias",
                  "Por favor", "Estoy cansado", "Quiero dormir", "Te quiero", "Hasta luego",
                  "Espera un momento", "Estoy bien"],
+
+  // Poder decir cómo se siente uno importa tanto como pedir cosas.
+  "Ánimo": ["Estoy contento", "Estoy triste", "Estoy preocupado", "Tengo miedo",
+            "Estoy frustrado", "Estoy nervioso", "Estoy tranquilo", "Estoy aburrido",
+            "Necesito un abrazo", "Quiero compañía", "Quiero estar solo",
+            "Gracias por cuidarme"],
+
+  // Quien no puede moverse solo necesita pedir cada ajuste. Son las que más
+  // se usan en el día a día y las que evitan dolor y llagas.
+  "Mi cuerpo": ["Quiero cambiar de posición", "Súbeme la cama", "Bájame la cama",
+                "Acomódame la cabeza", "Acomódame la almohada", "Muéveme el brazo",
+                "Muéveme la pierna", "Tengo un calambre", "Me estoy resbalando",
+                "Tápame", "Destápame", "Quiero sentarme"],
+
   "Comida": ["Tengo hambre", "Tengo sed", "Está caliente", "Está frío", "Falta sal",
              "Más azúcar", "Está muy dulce", "Quiero más", "Ya no quiero", "Está rico",
              "Quiero agua", "Más despacio"],
-  "Salud": ["Me duele", "No estoy cómodo", "Necesito ayuda", "Llama al doctor",
-            "Me falta el aire", "Tengo frío", "Tengo calor", "Quiero cambiar de posición",
-            "Quiero ir al baño", "Necesito mi medicina", "Me pica", "Estoy mareado"],
+
+  // Respiración, secreciones y deglución: lo urgente en esclerosis.
+  "Salud": ["Me duele", "Me duele mucho", "Me falta el aire", "Me atoré",
+            "Necesito aspiración", "Tengo mucha saliva", "Límpiame la boca",
+            "La máscara me aprieta", "Necesito mi medicina", "Llama al doctor",
+            "Estoy mareado", "Me pica"],
+
+  "Entorno": ["Prende la luz", "Apaga la luz", "Prende la tele", "Apaga la tele",
+              "Sube el volumen", "Baja el volumen", "Pon música", "Abre la ventana",
+              "Cierra la ventana", "Llama a mi familia", "Acércate", "Dame mi teléfono"],
+
+  // Para manejar la conversación: sin esto, el otro habla encima o da por
+  // terminada la frase antes de tiempo.
+  "Conversación": ["Espera, estoy escribiendo", "Déjame terminar", "No entendiste",
+                   "Repite por favor", "Más despacio", "Ya terminé", "No sé",
+                   "Quizá", "Ahora no", "Después", "Estoy de acuerdo", "No estoy de acuerdo"],
 };
 const PALABRAS = ("que de no la el en y a los se del las un por con una para es al lo como más pero sus le ya " +
  "este sí porque esta entre cuando muy sin sobre también me hasta hay donde quien desde todo nos durante " +
@@ -361,10 +389,12 @@ function pintar(){
   }
 
   if(S.vista === "frases"){                       // menú de categorías
-    rejilla.style.gridTemplateColumns = "repeat(2,1fr)";
-    rejilla.style.gridTemplateRows = "repeat(2,1fr)";
-    Object.keys(FRASES).forEach(c => add(celda(c, {t:"catfrase", v:c}, "")));
-    add(celda("VOLVER", {t:"volver"}, "accion rojo"));
+    const cats = Object.keys(FRASES);
+    const filas = Math.ceil((cats.length + 1) / 4);
+    rejilla.style.gridTemplateColumns = "repeat(4,1fr)";
+    rejilla.style.gridTemplateRows = "repeat(" + filas + ",1fr)";
+    cats.forEach(c => add(celda(c, {t:"catfrase", v:c}, "chica")));
+    add(celda("VOLVER", {t:"volver"}, "chica accion rojo"));
     marcar(); return;
   }
   if(S.vista === "catfrases"){                    // frases de una categoría
