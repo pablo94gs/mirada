@@ -29,43 +29,47 @@ const GRUPOS = [
 ];
 const TECLADO = ("A B C D E F G H I J K L M N Ñ O P Q R S T U V W X Y Z").split(" ");
 const FRASES = {
-  // Lo que más se dice en el día. Va primero porque es lo que más se busca.
   "Cotidianas": ["Hola", "Buen día", "Buenas noches", "¿Cómo estás?", "Muchas gracias",
                  "Por favor", "Estoy cansado", "Quiero dormir", "Te quiero", "Hasta luego",
                  "Espera un momento", "Estoy bien"],
 
-  // Poder decir cómo se siente uno importa tanto como pedir cosas.
+  // «Es involuntario, estoy bien» es para la labilidad emocional de la ELA: la
+  // risa o el llanto que aparecen sin corresponder a lo que la persona siente.
+  // Poder aclararlo evita que todos a su alrededor se alarmen sin motivo.
   "Ánimo": ["Estoy contento", "Estoy triste", "Estoy preocupado", "Tengo miedo",
             "Estoy frustrado", "Estoy nervioso", "Estoy tranquilo", "Estoy aburrido",
             "Necesito un abrazo", "Quiero compañía", "Quiero estar solo",
-            "Gracias por cuidarme"],
+            "Gracias por cuidarme", "Es involuntario, estoy bien"],
 
-  // Quien no puede moverse solo necesita pedir cada ajuste. Son las que más
-  // se usan en el día a día y las que evitan dolor y llagas.
-  "Mi cuerpo": ["Quiero cambiar de posición", "Súbeme la cama", "Bájame la cama",
+  "Mi cuerpo": ["Quiero cambiar de posición", "Súbeme la cabecera", "Bájame la cabecera",
                 "Acomódame la cabeza", "Acomódame la almohada", "Muéveme el brazo",
                 "Muéveme la pierna", "Tengo un calambre", "Me estoy resbalando",
                 "Tápame", "Destápame", "Quiero sentarme"],
+
+  // Lo urgente en ELA. Va en categoría propia para llegar en dos miradas.
+  "Respirar": ["Me falta el aire", "Me falta aire acostado", "Ponme la máscara",
+               "Quítame la máscara", "La máscara me aprieta", "Necesito aspiración",
+               "Tengo mucha saliva", "Ayúdame a toser", "Me atoré", "No puedo tragar",
+               "Límpiame la boca", "Siéntame más derecho"],
 
   "Comida": ["Tengo hambre", "Tengo sed", "Está caliente", "Está frío", "Falta sal",
              "Más azúcar", "Está muy dulce", "Quiero más", "Ya no quiero", "Está rico",
              "Quiero agua", "Más despacio"],
 
-  // Respiración, secreciones y deglución: lo urgente en esclerosis.
-  "Salud": ["Me duele", "Me duele mucho", "Me falta el aire", "Me atoré",
-            "Necesito aspiración", "Tengo mucha saliva", "Límpiame la boca",
-            "La máscara me aprieta", "Necesito mi medicina", "Llama al doctor",
-            "Estoy mareado", "Me pica"],
+  "Salud": ["Me duele", "Me duele mucho", "Me duele la espalda", "Me duele el cuello",
+            "Me duele la cabeza", "Necesito mi medicina", "Llama al doctor",
+            "Estoy mareado", "Me pica", "Tengo fiebre", "Límpiame los ojos",
+            "Tengo algo en el ojo"],
 
   "Entorno": ["Prende la luz", "Apaga la luz", "Prende la tele", "Apaga la tele",
               "Sube el volumen", "Baja el volumen", "Pon música", "Abre la ventana",
               "Cierra la ventana", "Llama a mi familia", "Acércate", "Dame mi teléfono"],
 
-  // Para manejar la conversación: sin esto, el otro habla encima o da por
-  // terminada la frase antes de tiempo.
+  // Sin esto, el interlocutor habla encima o adivina el final de la frase.
+  // Las dos últimas son para quien escribe con la mirada: los ojos se cansan.
   "Conversación": ["Espera, estoy escribiendo", "Déjame terminar", "No entendiste",
-                   "Repite por favor", "Más despacio", "Ya terminé", "No sé",
-                   "Quizá", "Ahora no", "Después", "Estoy de acuerdo", "No estoy de acuerdo"],
+                   "Repite por favor", "Más despacio", "Ya terminé", "No sé", "Quizá",
+                   "Ahora no", "Después", "Me cansan los ojos", "Necesito una pausa"],
 };
 const PALABRAS = ("que de no la el en y a los se del las un por con una para es al lo como más pero sus le ya " +
  "este sí porque esta entre cuando muy sin sobre también me hasta hay donde quien desde todo nos durante " +
@@ -390,9 +394,9 @@ function pintar(){
 
   if(S.vista === "frases"){                       // menú de categorías
     const cats = Object.keys(FRASES);
-    const filas = Math.ceil((cats.length + 1) / 4);
-    rejilla.style.gridTemplateColumns = "repeat(4,1fr)";
-    rejilla.style.gridTemplateRows = "repeat(" + filas + ",1fr)";
+    const cols = 3;                                   // 8 categorías + VOLVER = 3x3
+    rejilla.style.gridTemplateColumns = "repeat(" + cols + ",1fr)";
+    rejilla.style.gridTemplateRows = "repeat(" + Math.ceil((cats.length + 1) / cols) + ",1fr)";
     cats.forEach(c => add(celda(c, {t:"catfrase", v:c}, "chica")));
     add(celda("VOLVER", {t:"volver"}, "chica accion rojo"));
     marcar(); return;
