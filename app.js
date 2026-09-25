@@ -15,7 +15,7 @@ const guardarCfg = () => localStorage.setItem("mirada.cfg", JSON.stringify(cfg))
 
 /* ============================ estado ============================ */
 const S = {
-  listo:false, pausa:true, vista:"grupos", grupo:null, categoria:null,
+  listo:false, pausa:true, vista:"grupos", grupo:null, categoria:null, subfrases:null,
   texto:"", cara:false, ultimaCara:0,
   rasgos:null, punto:{x:innerWidth/2,y:innerHeight/2},
   celda:null, desde:0, fuera:0, enfriando:0, parpadeoPrev:0, parpadeo:false,
@@ -58,12 +58,30 @@ const FRASES = {
 
   "Salud": ["Me duele", "Me duele mucho", "Me duele la espalda", "Me duele el cuello",
             "Me duele la cabeza", "Necesito mi medicina", "Llama al doctor",
-            "Estoy mareado", "Me pica", "Tengo fiebre", "Límpiame los ojos",
-            "Tengo algo en el ojo"],
+            "Estoy mareado", "Tengo fiebre", "Límpiame los ojos",
+            "Tengo algo en el ojo",
+            // Una frase puede abrir un submenú en vez de decirse directamente.
+            { txt: "Me pica…", sub: [
+                "Me pica el brazo", "Me pica la pierna", "Me pica la nariz",
+                "Me pica el ojo derecho", "Me pica el ojo izquierdo", "Me pica la boca",
+                "Me pica la oreja derecha", "Me pica la oreja izquierda",
+                "Me pica la cabeza", "Me pica la espalda"] }],
 
   "Entorno": ["Prende la luz", "Apaga la luz", "Prende la tele", "Apaga la tele",
               "Sube el volumen", "Baja el volumen", "Pon música", "Abre la ventana",
               "Cierra la ventana", "Llama a mi familia", "Acércate", "Dame mi teléfono"],
+
+  // Órdenes para el Alexa del cuarto. La app las dice en voz alta y Alexa las
+  // obedece: hay que subir el volumen del dispositivo y que el altavoz apunte
+  // hacia ella. «Anuncia» suena en todos los Echo de la casa a la vez, así que
+  // es la más segura para pedir ayuda.
+  "Alexa": ["Alexa, envía un mensaje a cocina que diga necesito ayuda",
+            "Alexa, anuncia necesito ayuda",
+            "Alexa, reproduce un audiolibro", "Alexa, pausa el audiolibro",
+            "Alexa, reanuda el audiolibro", "Alexa, sube el volumen",
+            "Alexa, baja el volumen", "Alexa, silencio",
+            "Alexa, prende la luz", "Alexa, apaga la luz",
+            "Alexa, pon música relajante", "Alexa, qué hora es"],
 
   // Sin esto, el interlocutor habla encima o adivina el final de la frase.
   // Las dos últimas son para quien escribe con la mirada: los ojos se cansan.
@@ -405,8 +423,19 @@ function pintar(){
     const lista = FRASES[S.categoria] || [];
     rejilla.style.gridTemplateColumns = "repeat(4,1fr)";
     rejilla.style.gridTemplateRows = "repeat(" + Math.ceil((lista.length + 1) / 4) + ",1fr)";
-    lista.forEach(f => add(celda(f, {t:"frase", v:f}, "chica accion")));
+    lista.forEach((f, i) => {
+      if(typeof f === "string") add(celda(f, {t:"frase", v:f}, "chica accion"));
+      else add(celda(f.txt, {t:"subfrase", v:i}, "chica accion"));   // abre submenú
+    });
     add(celda("VOLVER", {t:"frases"}, "chica accion rojo"));
+    marcar(); return;
+  }
+  if(S.vista === "subfrases"){                    // opciones de una frase
+    const lista = S.subfrases || [];
+    rejilla.style.gridTemplateColumns = "repeat(4,1fr)";
+    rejilla.style.gridTemplateRows = "repeat(" + Math.ceil((lista.length + 1) / 4) + ",1fr)";
+    lista.forEach(f => add(celda(f, {t:"frase", v:f}, "chica accion")));
+    add(celda("VOLVER", {t:"catfrase", v:S.categoria}, "chica accion rojo"));
     marcar(); return;
   }
   const modo = disposicionActiva();
@@ -461,6 +490,9 @@ function ejecutar(a){
     case "volver":  S.vista = "grupos"; S.grupo = null; break;
     case "frases":   S.vista = "frases"; break;
     case "catfrase": S.categoria = a.v; S.vista = "catfrases"; break;
+    case "subfrase": { const f = (FRASES[S.categoria] || [])[a.v];
+                       S.subfrases = (f && f.sub) || [];
+                       S.vista = "subfrases"; break; }
     case "frase":    S.texto = a.v; verTexto(); hablar(a.v, true);
                      S.vista = "grupos"; break;
     case "letra":   S.texto += a.v; if(cfg.eco) hablar(a.v);

@@ -117,8 +117,9 @@ solo necesita pedir cada ajuste de postura.
 | **Mi cuerpo** | Cada ajuste de postura: cabecera, almohada, brazos, taparse |
 | **Respirar** | Máscara, aspiración, saliva, toser, atoro, tragar |
 | **Comida** | Temperatura, sal, azúcar, ritmo, cantidad |
-| **Salud** | Dolor por zona, medicina, doctor, ojos |
+| **Salud** | Dolor por zona, medicina, doctor, ojos; «Me pica…» abre un submenú de zonas |
 | **Entorno** | Luz, tele, volumen, música, ventana, teléfono |
+| **Alexa** | Órdenes habladas al Echo del cuarto |
 | **Conversación** | Manejar el turno; incluye «me cansan los ojos» |
 
 Tres que merecen mención:
@@ -133,6 +134,25 @@ Tres que merecen mención:
 
 Los dos huecos de la fila de arriba llevan **Sí** y **No** mientras no haya palabra
 que sugerir: son las dos respuestas que más falta hacen y quedan a una sola mirada.
+
+### Frases con submenú
+
+Una frase puede abrir otra pantalla en vez de decirse:
+
+    { txt: "Me pica…", sub: ["Me pica el brazo", "Me pica la nariz", …] }
+
+Así están las zonas de picazón. Sirve para cualquier frase que necesite precisar
+algo (dolor, partes del cuerpo, nombres de personas).
+
+### Alexa
+
+Las órdenes se dicen en voz alta y el Echo las obedece. Para que funcione:
+
+- el altavoz de la tablet apuntando hacia el Echo y con buen volumen;
+- **«Alexa, anuncia necesito ayuda»** suena en *todos* los Echo de la casa a la
+  vez: es la más segura para pedir auxilio, más que el mensaje a un solo cuarto;
+- conviene grabar estas frases con voz propia (*Ajustes → Grabar mi voz*): Alexa
+  suele reconocer mejor una voz humana que la sintética.
 
 Para cambiarlas, editar `FRASES` al inicio de `app.js`.
 
