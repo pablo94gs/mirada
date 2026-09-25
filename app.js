@@ -8,13 +8,13 @@ const MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/f
 
 /* ============================ configuración ============================ */
 const DEF = { modo:"ambos", dwell:1200, ganancia:1.0, suavizado:5, blink:0, eco:0,
-              camara:0, voz:"", disposicion:"auto", adaptar:1, puntos:18, miVoz:1, calInicio:"siempre" };
+              camara:0, voz:"", disposicion:"auto", adaptar:1, puntos:18, miVoz:1, calInicio:"siempre", autoborrar:1 };
 const cfg = Object.assign({}, DEF, JSON.parse(localStorage.getItem("mirada.cfg") || "{}"));
 const guardarCfg = () => localStorage.setItem("mirada.cfg", JSON.stringify(cfg));
 
 /* ============================ estado ============================ */
 const S = {
-  listo:false, pausa:true, vista:"grupos", grupo:null,
+  listo:false, pausa:true, vista:"grupos", grupo:null, categoria:null,
   texto:"", cara:false, ultimaCara:0,
   rasgos:null, punto:{x:innerWidth/2,y:innerHeight/2},
   celda:null, desde:0, fuera:0, enfriando:0, parpadeoPrev:0, parpadeo:false,
@@ -27,7 +27,17 @@ const GRUPOS = [
   ["O","P","Q","R","S"], ["T","U","V","W","X"], ["Y","Z",",",".","?"],
 ];
 const TECLADO = ("A B C D E F G H I J K L M N Ñ O P Q R S T U V W X Y Z").split(" ");
-const FRASES = ["Sí","No","Gracias","Tengo sed","Me duele","Necesito ayuda","Quiero descansar"];
+const FRASES = {
+  "Cotidianas": ["Hola", "Buen día", "Buenas noches", "¿Cómo estás?", "Muchas gracias",
+                 "Por favor", "Estoy cansado", "Quiero dormir", "Te quiero", "Hasta luego",
+                 "Espera un momento", "Estoy bien"],
+  "Comida": ["Tengo hambre", "Tengo sed", "Está caliente", "Está frío", "Falta sal",
+             "Más azúcar", "Está muy dulce", "Quiero más", "Ya no quiero", "Está rico",
+             "Quiero agua", "Más despacio"],
+  "Salud": ["Me duele", "No estoy cómodo", "Necesito ayuda", "Llama al doctor",
+            "Me falta el aire", "Tengo frío", "Tengo calor", "Quiero cambiar de posición",
+            "Quiero ir al baño", "Necesito mi medicina", "Me pica", "Estoy mareado"],
+};
 const PALABRAS = ("que de no la el en y a los se del las un por con una para es al lo como más pero sus le ya " +
  "este sí porque esta entre cuando muy sin sobre también me hasta hay donde quien desde todo nos durante " +
  "todos uno les ni contra otros ese eso ante ellos e esto mí antes algunos qué unos yo otro otras otra él " +
@@ -62,9 +72,14 @@ function razonOjo(L, o){
     if(d < 1e-9) return .5;
     return ((p.x-a.x)*vx + (p.y-a.y)*vy) / d;
   };
+  const ancho = Math.hypot(P(o.dentro).x - P(o.fuera).x, P(o.dentro).y - P(o.fuera).y) || 1e-6;
+  const alto  = Math.hypot(P(o.abajo).x  - P(o.arriba).x, P(o.abajo).y  - P(o.arriba).y);
   return {
     h: proy(P(o.iris), P(o.fuera),  P(o.dentro)),
     v: proy(P(o.iris), P(o.arriba), P(o.abajo)),
+    // Cuánto está abierto el ojo. El párpado tapa el iris al mirar arriba o
+    // abajo, así que esto ayuda justo en el eje vertical, que es el más flojo.
+    ap: alto / ancho,
   };
 }
 
@@ -89,9 +104,12 @@ function medir(res){
   const ny = (L[1].y - cy) / ancho;
 
   // --- ojos: iris respecto a las esquinas del ojo ---
-  let ix = 0, iy = 0, hayIris = L.length >= 478;
+  let ix = 0, iy = 0, ixL = 0, iyL = 0, ixR = 0, iyR = 0, apL = 0, apR = 0;
+  const hayIris = L.length >= 478;
   if(hayIris){
     const a = razonOjo(L, OJO_IZQ), b = razonOjo(L, OJO_DER);
+    ixL = a.h; iyL = a.v; apL = a.ap;
+    ixR = b.h; iyR = b.v; apR = b.ap;
     ix = (a.h + b.h)/2; iy = (a.v + b.v)/2;
   } else {                                    // respaldo: blendshapes
     const B = res.faceBlendshapes && res.faceBlendshapes[0];
@@ -109,7 +127,7 @@ function medir(res){
     const p = ((g.eyeBlinkLeft||0)+(g.eyeBlinkRight||0))/2;
     S.parpadeo = p > .5 && S.parpadeoPrev <= .5; S.parpadeoPrev = p;
   }
-  return { hx, hy, hz, nx, ny, ix, iy };
+  return { hx, hy, hz, nx, ny, ix, iy, ixL, iyL, ixR, iyR, apL, apR, hayIris };
 }
 
 /* El vector de rasgos que entra al ajuste. Según el modo se usan unos u otros;
@@ -125,9 +143,17 @@ function vector(r){
   if(cfg.modo === "cabeza")
     return rico() ? [1, hx, hy, nx, ny, hz, hx*hy, hx*hx, hy*hy]
                   : [1, hx, hy, nx, ny, hz];
-  if(cfg.modo === "ojos")
-    return rico() ? [1, ix, iy, ix*iy, ix*ix, iy*iy]
-                  : [1, ix, iy, ix*iy];
+  if(cfg.modo === "ojos"){
+    // Tres cosas que faltaban y son las que más pesan cuando no se mueve la cabeza:
+    //  · cada ojo por separado — dan información parcialmente distinta;
+    //  · la apertura del párpado — el iris se tapa al mirar arriba/abajo;
+    //  · la cabeza como COMPENSACIÓN, no como puntero: aunque el movimiento sea
+    //    mínimo, cambia cómo se ve el iris, y el ajuste puede descontarlo.
+    const { ixL, iyL, ixR, iyR, apL, apR } = r;
+    if(!rico()) return [1, ix, iy, ix*iy];
+    return [1, ixL, iyL, ixR, iyR, apL, apR, hx, hy, nx, ny,
+            ix*iy, ix*ix, iy*iy];
+  }
   return rico() ? [1, hx, hy, ix, iy, nx, ny, hx*ix, hy*iy, ix*ix, iy*iy, hx*hy]
                 : [1, hx, hy, ix, iy, nx, ny];
 }
@@ -229,19 +255,32 @@ function cargarVoces(){
   if(cfg.voz) sel.value = cfg.voz;
 }
 speechSynthesis.onvoiceschanged = cargarVoces;
-function sintetica(t){
+function sintetica(t, alTerminar){
   try{
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(t);
     const v = voces.find(v => v.name === cfg.voz) || voces.find(v => /^es/i.test(v.lang));
     if(v){ u.voice = v; u.lang = v.lang; } else u.lang = "es-ES";
     u.rate = .95;
+    u.onend = () => alTerminar && alTerminar();
+    u.onerror = () => alTerminar && alTerminar();
     speechSynthesis.speak(u);
-  }catch(e){}
+  }catch(e){ if(alTerminar) alTerminar(); }
 }
-function hablar(t){
+
+/* 'completo' = se dijo el mensaje entero (botón HABLAR o una frase). Al terminar
+   de sonar, la pantalla se limpia sola: así no hay que borrar letra por letra
+   antes del siguiente mensaje. */
+function hablar(t, completo){
   if(!t || !t.trim()) return;
-  MiVoz.decir(t, sintetica, !!cfg.miVoz).catch(() => sintetica(t));
+  const alTerminar = () => {
+    if(!completo || !cfg.autoborrar) return;
+    S.texto = ""; S.vista = "grupos"; S.grupo = null;
+    verTexto(); pintar();
+  };
+  MiVoz.decir(t, x => sintetica(x, alTerminar), !!cfg.miVoz)
+       .then(r => { if(r !== "tts") alTerminar(); })
+       .catch(() => sintetica(t, alTerminar));
 }
 let actx = null;
 function clic(){
@@ -306,20 +345,33 @@ function pintar(){
   // fila de arriba: 2 sugerencias, frases y borrar todo
   tira.classList.toggle("oculta", S.vista === "frases");
   if(S.vista !== "frases"){
+    // Mientras no hay palabra que sugerir, esos dos huecos llevan SÍ y NO, que
+    // son las dos respuestas que más falta hacen.
+    const RESP = ["Sí", "No"];
     for(let i=0;i<2;i++){
       const w = sug[i];
-      addT(celda(w ? w : "—", w ? {t:"palabra", v:w} : {t:"nada"}, "chica accion" + (w?"":" apagada")));
+      if(w) addT(celda(w, {t:"palabra", v:w}, "chica accion"));
+      else  addT(celda(RESP[i], {t:"frase", v:RESP[i]},
+                       "chica accion " + (i === 0 ? "verde" : "rojo")));
     }
     addT(celda("FRASES", {t:"frases"}, "chica accion"));
     addT(celda(S.confirmar ? "¿SEGURO?" : "BORRAR TODO", {t:"limpiar"},
                "chica accion rojo" + (S.confirmar ? " alerta" : "")));
   }
 
-  if(S.vista === "frases"){
-    rejilla.style.gridTemplateColumns = "repeat(4,1fr)";
+  if(S.vista === "frases"){                       // menú de categorías
+    rejilla.style.gridTemplateColumns = "repeat(2,1fr)";
     rejilla.style.gridTemplateRows = "repeat(2,1fr)";
-    FRASES.forEach(f => add(celda(f, {t:"frase", v:f}, "chica accion")));
-    add(celda("VOLVER", {t:"volver"}, "chica accion rojo"));
+    Object.keys(FRASES).forEach(c => add(celda(c, {t:"catfrase", v:c}, "")));
+    add(celda("VOLVER", {t:"volver"}, "accion rojo"));
+    marcar(); return;
+  }
+  if(S.vista === "catfrases"){                    // frases de una categoría
+    const lista = FRASES[S.categoria] || [];
+    rejilla.style.gridTemplateColumns = "repeat(4,1fr)";
+    rejilla.style.gridTemplateRows = "repeat(" + Math.ceil((lista.length + 1) / 4) + ",1fr)";
+    lista.forEach(f => add(celda(f, {t:"frase", v:f}, "chica accion")));
+    add(celda("VOLVER", {t:"frases"}, "chica accion rojo"));
     marcar(); return;
   }
   const modo = disposicionActiva();
@@ -372,8 +424,10 @@ function ejecutar(a){
       break;
     case "grupo":   S.grupo = a.v; S.vista = "letras"; break;
     case "volver":  S.vista = "grupos"; S.grupo = null; break;
-    case "frases":  S.vista = "frases"; break;
-    case "frase":   S.texto = a.v; hablar(a.v); S.vista = "grupos"; break;
+    case "frases":   S.vista = "frases"; break;
+    case "catfrase": S.categoria = a.v; S.vista = "catfrases"; break;
+    case "frase":    S.texto = a.v; verTexto(); hablar(a.v, true);
+                     S.vista = "grupos"; break;
     case "letra":   S.texto += a.v; if(cfg.eco) hablar(a.v);
                     if(disposicionActiva() === "pasos") S.vista = "grupos"; break;
     case "palabra": S.texto = S.texto.replace(/([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)$/, a.v) + " ";
@@ -381,7 +435,7 @@ function ejecutar(a){
     case "espacio": { const u = S.texto.match(/([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)$/);
                       if(u) anotarUso(u[1]); S.texto += " "; break; }
     case "borrar":  S.texto = S.texto.slice(0, -1); break;
-    case "hablar":  hablar(S.texto); break;
+    case "hablar":  hablar(S.texto, true); break;
   }
   verTexto(); pintar();
 }
@@ -650,6 +704,7 @@ grupoBotones("#optBlink","blink");
 grupoBotones("#optEco","eco");
 grupoBotones("#optAdapt","adaptar");
 grupoBotones("#optMiVoz","miVoz");
+grupoBotones("#optAutoborrar","autoborrar");
 grupoBotones("#optCalIni","calInicio");
 $("#btnMiVoz").onclick = () => {
   MiVoz.crearPanel(() => { $("#voz").classList.remove("on"); $("#ajustes").classList.add("on"); });

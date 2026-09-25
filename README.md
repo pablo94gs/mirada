@@ -40,6 +40,7 @@ Levanta un servidor y un enlace temporal por HTTPS (la cámara no funciona sin H
 | **Sensibilidad** | Subirla si cuesta llegar a los bordes de la pantalla. |
 | **Confirmar parpadeando** | Elegir requiere mirar *y* parpadear. Sólo si la persona controla el parpadeo. |
 | **Afinar solo mientras se usa** | Cada selección acertada corrige el ajuste. Compensa que la persona se mueva con el rato. |
+| **Borrar el mensaje al decirlo** | Al terminar de sonar, la pantalla se limpia sola. |
 | **Detalle de la calibración** | 18 o 24 puntos. Los 18 van en 6 columnas, las mismas del teclado completo. |
 | **Calibrar al abrir la app** | *Siempre* (recomendado) o solo la primera vez. También hay un botón **Calibrar** arriba a la derecha. |
 
@@ -99,3 +100,31 @@ de clonación (ver abajo).
 Parte de una lista de español por frecuencia y **aprende**: cada palabra que se escribe o se
 acepta como sugerencia suma uso, y las más usadas por esta persona pasan adelante. El
 historial vive en `localStorage` (`mirada.uso`).
+
+
+## Frases rápidas
+
+**FRASES** abre tres categorías con 12 frases cada una:
+
+- **Cotidianas** — Hola · Buen día · Buenas noches · ¿Cómo estás? · Muchas gracias · Por favor · Estoy cansado · Quiero dormir · Te quiero · Hasta luego · Espera un momento · Estoy bien
+- **Comida** — Tengo hambre · Tengo sed · Está caliente · Está frío · Falta sal · Más azúcar · Está muy dulce · Quiero más · Ya no quiero · Está rico · Quiero agua · Más despacio
+- **Salud** — Me duele · No estoy cómodo · Necesito ayuda · Llama al doctor · Me falta el aire · Tengo frío · Tengo calor · Quiero cambiar de posición · Quiero ir al baño · Necesito mi medicina · Me pica · Estoy mareado
+
+Los dos huecos de la fila de arriba llevan **Sí** y **No** mientras no haya palabra
+que sugerir: son las dos respuestas que más falta hacen y quedan a una sola mirada.
+
+## Modo «solo ojos»
+
+Es el más difícil: sin mover la cabeza, todo el recorrido de la mirada cabe en
+unos pocos milímetros de iris. Lo que hace la app para exprimirlo:
+
+- mide **cada ojo por separado** en vez de promediarlos — dan información
+  parcialmente distinta;
+- usa la **apertura del párpado**, porque al mirar arriba o abajo el párpado tapa
+  el iris: es lo que más ayuda en el eje vertical, que es el flojo;
+- incluye la cabeza como **compensación, no como puntero**: aunque el movimiento
+  sea mínimo, cambia cómo se ve el iris, y el ajuste lo descuenta.
+
+Con los ojos conviene calibrar con **24 puntos**, acercar la tablet (35–45 cm),
+ponerla a la altura de los ojos y usar luz difusa de frente. Si la persona usa
+gafas, el reflejo sobre el cristal es el enemigo número uno.
