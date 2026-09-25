@@ -62,8 +62,10 @@ const FRASES = {
             "Tengo algo en el ojo",
             // Una frase puede abrir un submenú en vez de decirse directamente.
             { txt: "Me pica…", sub: [
-                "Me pica el brazo", "Me pica la pierna", "Me pica la nariz",
-                "Me pica el ojo derecho", "Me pica el ojo izquierdo", "Me pica la boca",
+                "Me pica el brazo derecho", "Me pica el brazo izquierdo",
+                "Me pica la pierna derecha", "Me pica la pierna izquierda",
+                "Me pica la nariz", "Me pica la boca",
+                "Me pica el ojo derecho", "Me pica el ojo izquierdo",
                 "Me pica la oreja derecha", "Me pica la oreja izquierda",
                 "Me pica la cabeza", "Me pica la espalda"] }],
 
