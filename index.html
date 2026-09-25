@@ -39,10 +39,13 @@ button{font-family:inherit;color:inherit}
 #video.on{display:block}
 
 /* ---------- rejilla ---------- */
-#tira{display:flex;gap:8px;flex:0 0 auto;height:clamp(54px,9.5vh,92px)}
+#tira{display:flex;gap:8px;flex:0 0 auto;height:clamp(72px,13vh,124px)}
 #tira.oculta{display:none}
 #tira .celda{flex:1;min-width:0}
 #tira .celda .txt{font-size:clamp(12px,2.1vh,22px);letter-spacing:0;line-height:1.12}
+/* SÍ, NO, FRASES y TECLADO: los que más se usan, bien grandes */
+#tira .celda.grande{flex:1.35}
+#tira .celda.grande .txt{font-size:clamp(20px,4.2vh,44px);font-weight:800;letter-spacing:.02em}
 #rejilla{flex:1;display:grid;gap:8px;min-height:0}
 .celda{position:relative;background:var(--card);border:3px solid var(--line);border-radius:18px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;

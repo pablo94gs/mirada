@@ -15,7 +15,7 @@ const guardarCfg = () => localStorage.setItem("mirada.cfg", JSON.stringify(cfg))
 
 /* ============================ estado ============================ */
 const S = {
-  listo:false, pausa:true, vista:"grupos", grupo:null, categoria:null, subfrases:null,
+  listo:false, pausa:true, vista:"frases", grupo:null, categoria:null, subfrases:null,
   texto:"", cara:false, ultimaCara:0,
   rasgos:null, punto:{x:innerWidth/2,y:innerHeight/2},
   celda:null, desde:0, fuera:0, enfriando:0, parpadeoPrev:0, parpadeo:false,
@@ -328,7 +328,7 @@ function hablar(t, completo){
   if(!t || !t.trim()) return;
   const alTerminar = () => {
     if(!completo || !cfg.autoborrar) return;
-    S.texto = ""; S.vista = "grupos"; S.grupo = null;
+    S.texto = "";                       // se limpia el texto, no la pantalla
     verTexto(); pintar();
   };
   MiVoz.decir(t, x => sintetica(x, alTerminar), !!cfg.miVoz)
@@ -395,30 +395,35 @@ function pintar(){
   const add = c => { celdas.push(c); rejilla.appendChild(c.nodo); };
   const addT = c => { celdas.push(c); tira.appendChild(c.nodo); };
 
-  // fila de arriba: 2 sugerencias, frases y borrar todo
-  tira.classList.toggle("oculta", S.vista === "frases");
-  if(S.vista !== "frases"){
-    // Mientras no hay palabra que sugerir, esos dos huecos llevan SÍ y NO, que
-    // son las dos respuestas que más falta hacen.
+  // Fila de arriba. En las frases lleva SÍ y NO bien grandes, para poder
+  // responder sin salir del menú; en el teclado, las palabras sugeridas.
+  const enFrases = ["frases", "catfrases", "subfrases"].includes(S.vista);
+  tira.classList.remove("oculta");
+  if(enFrases){
+    addT(celda("SÍ", {t:"frase", v:"Sí"}, "grande accion verde"));
+    addT(celda("NO", {t:"frase", v:"No"}, "grande accion rojo"));
+    addT(celda("TECLADO", {t:"teclado"}, "grande accion"));
+  } else {
     const RESP = ["Sí", "No"];
     for(let i=0;i<2;i++){
       const w = sug[i];
       if(w) addT(celda(w, {t:"palabra", v:w}, "chica accion"));
-      else  addT(celda(RESP[i], {t:"frase", v:RESP[i]},
-                       "chica accion " + (i === 0 ? "verde" : "rojo")));
+      else  addT(celda(RESP[i] === "Sí" ? "SÍ" : "NO", {t:"frase", v:RESP[i]},
+                       "grande accion " + (i === 0 ? "verde" : "rojo")));
     }
-    addT(celda("FRASES", {t:"frases"}, "chica accion"));
-    addT(celda(S.confirmar ? "¿SEGURO?" : "BORRAR TODO", {t:"limpiar"},
-               "chica accion rojo" + (S.confirmar ? " alerta" : "")));
+    addT(celda("FRASES", {t:"frases"}, "grande accion"));
   }
+  addT(celda(S.confirmar ? "¿SEGURO?" : "BORRAR TODO", {t:"limpiar"},
+             "chica accion rojo" + (S.confirmar ? " alerta" : "")));
 
   if(S.vista === "frases"){                       // menú de categorías
+    // 9 categorías en 3x3: entran justas y el nombre largo cabe entero.
+    // TECLADO no va aquí: está arriba, junto a SÍ y NO.
     const cats = Object.keys(FRASES);
-    const cols = 3;                                   // 8 categorías + VOLVER = 3x3
+    const cols = 3;
     rejilla.style.gridTemplateColumns = "repeat(" + cols + ",1fr)";
-    rejilla.style.gridTemplateRows = "repeat(" + Math.ceil((cats.length + 1) / cols) + ",1fr)";
-    cats.forEach(c => add(celda(c, {t:"catfrase", v:c}, "chica")));
-    add(celda("VOLVER", {t:"volver"}, "chica accion rojo"));
+    rejilla.style.gridTemplateRows = "repeat(" + Math.ceil(cats.length / cols) + ",1fr)";
+    cats.forEach(c => add(celda(c, {t:"catfrase", v:c}, "")));
     marcar(); return;
   }
   if(S.vista === "catfrases"){                    // frases de una categoría
@@ -495,8 +500,10 @@ function ejecutar(a){
     case "subfrase": { const f = (FRASES[S.categoria] || [])[a.v];
                        S.subfrases = (f && f.sub) || [];
                        S.vista = "subfrases"; break; }
-    case "frase":    S.texto = a.v; verTexto(); hablar(a.v, true);
-                     S.vista = "grupos"; break;
+    // Al decir una frase NO se sale del menú: así se puede encadenar otra, o
+    // responder sí/no a lo que pregunten, sin volver a navegar.
+    case "frase":    S.texto = a.v; verTexto(); hablar(a.v, true); break;
+    case "teclado":  S.vista = "grupos"; S.grupo = null; break;
     case "letra":   S.texto += a.v; if(cfg.eco) hablar(a.v);
                     if(disposicionActiva() === "pasos") S.vista = "grupos"; break;
     case "palabra": S.texto = S.texto.replace(/([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)$/, a.v) + " ";

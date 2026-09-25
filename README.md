@@ -30,6 +30,13 @@ Levanta un servidor y un enlace temporal por HTTPS (la cámara no funciona sin H
 3. Mirar una casilla y **sostener la mirada**: se llena de color y se selecciona.
 4. Todo se puede tocar con el dedo, para quien acompaña.
 
+**La app abre en las frases**, que es lo que más se usa. Arriba están siempre
+**SÍ**, **NO** y **TECLADO**, en grande: se puede responder sí o no sin salir de
+donde uno esté, y pasar a deletrear solo cuando hace falta algo puntual.
+
+Al decir una frase **no se sale del menú**: queda listo para encadenar otra o
+para responder a lo que pregunten.
+
 ## Ajustes que importan
 
 | Ajuste | Para qué |
