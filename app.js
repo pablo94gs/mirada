@@ -8,7 +8,8 @@ const MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/f
 
 /* ============================ configuración ============================ */
 const DEF = { modo:"ambos", dwell:1200, ganancia:1.0, suavizado:5, blink:0, eco:0,
-              camara:0, voz:"", disposicion:"auto", adaptar:1, puntos:18, miVoz:1, calInicio:"siempre", autoborrar:1 };
+              camara:0, voz:"", disposicion:"auto", adaptar:1, puntos:18, miVoz:1, calInicio:"siempre", autoborrar:1,
+              gananciaV:1.0, iman:70, areaCal:"amplia" };
 const cfg = Object.assign({}, DEF, JSON.parse(localStorage.getItem("mirada.cfg") || "{}"));
 const guardarCfg = () => localStorage.setItem("mirada.cfg", JSON.stringify(cfg));
 
@@ -472,6 +473,16 @@ async function iniciar(){
 /* ============================ calibración ============================ */
 /* 9 puntos: con más puntos el ajuste distingue mejor el aporte de la
    cabeza del de los ojos, que es justo lo que faltaba.                 */
+const _MARGEN_CAL = { amplia: 1.0, media: .72, reducida: .5 };
+
+function _encoge(p){
+  // Acerca los puntos al centro. Sirve cuando la persona no alcanza a mirar a
+  // las esquinas: se calibra dentro de lo que sí alcanza y el ajuste estira ese
+  // recorrido corto hasta cubrir la pantalla entera.
+  const k = _MARGEN_CAL[cfg.areaCal] || 1;
+  return p.map(([x, y]) => [.5 + (x - .5) * k, .5 + (y - .5) * k]);
+}
+
 function rejillaCal(n){
   if(n >= 24){                                   // 6 x 4
     const xs = [.07,.25,.42,.58,.75,.93], ys = [.09,.36,.64,.91], p = [];
@@ -493,11 +504,11 @@ function rejillaCal(n){
   if(n >= 13) p.push([.30,.30],[.70,.30],[.30,.70],[.70,.70]);   // + diagonales
   return p;
 }
-let PUNTOS = rejillaCal(13);
+let PUNTOS = rejillaCal(18);
 let calIdx = 0, calFin = 0, calMuestras = [], calTodo = [];
 
 function calibrar(){
-  PUNTOS = rejillaCal(cfg.puntos);
+  PUNTOS = _encoge(rejillaCal(cfg.puntos));
   calIdx = -1; calMuestras = []; calTodo = []; S.calibrando = true;   // -1 = esperando la cara
   S.caraDesde = 0;
   $("#dianaCapa").classList.add("on");
@@ -593,8 +604,10 @@ function bucle(){
   aviso("");
 
   const f = vector(S.rasgos);
-  let nx = (aplicar(modelo.wx, f) - .5) * cfg.ganancia + .5;
-  let ny = (aplicar(modelo.wy, f) - .5) * cfg.ganancia + .5;
+  // Ganancia separada por eje: el recorrido vertical de la mirada es bastante
+  // más corto que el horizontal, así que casi siempre necesita más empuje.
+  let nx = (aplicar(modelo.wx, f) - .5) * cfg.ganancia  + .5;
+  let ny = (aplicar(modelo.wy, f) - .5) * cfg.gananciaV + .5;
   nx = clamp(nx, 0, 1); ny = clamp(ny, 0, 1);
 
   const dt = clamp((ahora - tPrev)/1000, .008, .1); tPrev = ahora;
@@ -604,11 +617,23 @@ function bucle(){
   S.punto.x = filtX.filtrar(nx, dt, mincorte, beta) * innerWidth;
   S.punto.y = filtY.filtrar(ny, dt, mincorte, beta) * innerHeight;
 
+  dwell(ahora, f);
+
+  // Imán: mientras se sostiene la mirada, el punto se va pegando al centro de
+  // la casilla. El temblor deja de importar y se ve con claridad qué está
+  // seleccionado. La detección sigue usando la posición real, así que salirse
+  // funciona igual de bien.
+  let px = S.punto.x, py = S.punto.y;
+  if(S.celda && S.celda.rect && cfg.iman > 0){
+    const r = S.celda.rect;
+    const prog = clamp((ahora - S.desde) / cfg.dwell, 0, 1);
+    const k = (cfg.iman / 100) * (.35 + .65 * prog);
+    px += ((r.left + r.width / 2) - px) * k;
+    py += ((r.top + r.height / 2) - py) * k;
+  }
   const p = $("#punto");
   p.classList.add("on");
-  p.style.left = S.punto.x + "px"; p.style.top = S.punto.y + "px";
-
-  dwell(ahora, f);
+  p.style.left = px + "px"; p.style.top = py + "px";
 }
 
 function soltar(){
@@ -618,7 +643,10 @@ function soltar(){
 
 function dwell(ahora, f){
   if(ahora < S.enfriando) return;
-  const H = 14;                                   // histéresis: cuesta más salirse que entrar
+  // Histéresis proporcional: en casillas grandes hay que alejarse más para
+  // soltarlas. Antes era fijo en 14 px y en una tablet eso es nada.
+  const _r0 = S.celda && S.celda.rect;
+  const H = _r0 ? Math.max(14, Math.min(_r0.width, _r0.height) * 0.22) : 14;
   const dentro = (c, m) => { const r = c.rect; return r &&
     S.punto.x >= r.left-m && S.punto.x <= r.right+m && S.punto.y >= r.top-m && S.punto.y <= r.bottom+m; };
 
@@ -692,7 +720,9 @@ function rango(sel, clave, muestra){
   r.value = cfg[clave];
   const pinta = () => $(muestra).textContent =
     clave === "dwell"    ? (cfg.dwell/1000).toFixed(1).replace(".", ",") + " s" :
-    clave === "ganancia" ? cfg.ganancia.toFixed(1).replace(".", ",") :
+    clave === "ganancia"  ? cfg.ganancia.toFixed(1).replace(".", ",") :
+    clave === "gananciaV" ? cfg.gananciaV.toFixed(1).replace(".", ",") :
+    clave === "iman"      ? (cfg.iman === 0 ? "sin imán" : cfg.iman + "%") :
     ["mínimo","muy bajo","bajo","medio-bajo","medio","medio-alto","alto","muy alto","máximo"][cfg.suavizado-1];
   r.addEventListener("input", () => { cfg[clave] = +r.value; guardarCfg(); pinta(); });
   pinta();
@@ -715,6 +745,9 @@ grupoBotones("#optPuntos","puntos", () => { cargarModelo();
 grupoBotones("#optCam","camara", () => video.classList.toggle("on", !!cfg.camara));
 rango("#rgDwell","dwell","#vDwell");
 rango("#rgGan","ganancia","#vGan");
+rango("#rgGanV","gananciaV","#vGanV");
+rango("#rgIman","iman","#vIman");
+grupoBotones("#optAreaCal","areaCal", () => aviso("Hay que calibrar de nuevo", 3000));
 rango("#rgSua","suavizado","#vSua");
 $("#selVoz").addEventListener("change", e => { cfg.voz = e.target.value; guardarCfg(); });
 

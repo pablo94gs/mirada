@@ -207,9 +207,35 @@ select{width:100%;padding:11px;border-radius:11px;border:2px solid var(--line);f
       <div class="ayuda">Cuánto hay que sostener la mirada. Más tiempo = menos errores.</div>
     </div>
     <div class="fila">
-      <label>Sensibilidad <span class="val" id="vGan">1,0</span></label>
-      <input type="range" id="rgGan" min="0.5" max="2.5" step="0.1">
-      <div class="ayuda">Si cuesta llegar a los bordes, súbela.</div>
+      <label>Sensibilidad horizontal <span class="val" id="vGan">1,0</span></label>
+      <input type="range" id="rgGan" min="0.5" max="4" step="0.1">
+      <div class="ayuda">Si cuesta llegar a los lados, súbela.</div>
+    </div>
+    <div class="fila">
+      <label>Sensibilidad vertical <span class="val" id="vGanV">1,0</span></label>
+      <input type="range" id="rgGanV" min="0.5" max="4" step="0.1">
+      <div class="ayuda">Si cuesta llegar a la fila de arriba o a la de abajo, súbela.
+        Casi siempre necesita <b>más</b> que la horizontal: la mirada recorre menos
+        de arriba abajo que de lado a lado.</div>
+    </div>
+    <div class="fila">
+      <label>Imán a la casilla <span class="val" id="vIman">70%</span></label>
+      <input type="range" id="rgIman" min="0" max="100" step="5">
+      <div class="ayuda">Al entrar en una casilla, el punto se pega a su centro y deja
+        de temblar. <b>Es lo que más ayuda si el puntero se mueve mucho.</b> Subirlo no
+        dificulta salir: para eso se sigue usando la mirada real.</div>
+    </div>
+    <div class="fila">
+      <label>Alcance de la mirada</label>
+      <div class="opts" id="optAreaCal">
+        <button data-v="amplia">Amplio</button>
+        <button data-v="media">Medio</button>
+        <button data-v="reducida">Reducido</button>
+      </div>
+      <div class="ayuda">Si la persona <b>no alcanza a mirar las esquinas</b>, elija
+        <b>Medio</b> o <b>Reducido</b>: los puntos de calibración se acercan al centro y
+        la app estira ese recorrido corto hasta cubrir toda la pantalla. Hay que volver
+        a calibrar después de cambiarlo.</div>
     </div>
     <div class="fila">
       <label>Suavizado <span class="val" id="vSua">medio</span></label>

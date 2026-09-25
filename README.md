@@ -37,7 +37,9 @@ Levanta un servidor y un enlace temporal por HTTPS (la cámara no funciona sin H
 | **Cabeza / Cabeza y ojos / Solo ojos** | Si la persona puede girar algo la cabeza, *Cabeza* es mucho más preciso. *Solo ojos* es para quien no puede moverla. |
 | **Disposición** | *Dos pasos* (grupo de 5 letras → letra) para celular. *Teclado completo* (27 letras a la vista) para tablet o iPad. |
 | **Tiempo para seleccionar** | Cuánto hay que sostener la mirada. Subirlo si hay selecciones sin querer. |
-| **Sensibilidad** | Subirla si cuesta llegar a los bordes de la pantalla. |
+| **Sensibilidad horizontal / vertical** | Por separado: la vertical casi siempre necesita más, porque la mirada recorre menos de arriba abajo. |
+| **Imán a la casilla** | Al entrar en una casilla el punto se pega a su centro y deja de temblar. Lo que más ayuda si el puntero se mueve mucho. |
+| **Alcance de la mirada** | Si no alcanza a mirar las esquinas: *Medio* o *Reducido* calibran en un área más chica y la estiran a toda la pantalla. |
 | **Confirmar parpadeando** | Elegir requiere mirar *y* parpadear. Sólo si la persona controla el parpadeo. |
 | **Afinar solo mientras se usa** | Cada selección acertada corrige el ajuste. Compensa que la persona se mueva con el rato. |
 | **Borrar el mensaje al decirlo** | Al terminar de sonar, la pantalla se limpia sola. |
