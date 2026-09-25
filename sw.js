@@ -1,7 +1,7 @@
 // Cachea la app y el detector de rostro para que funcione sin internet.
 // Los archivos propios van "primero red": así una version nueva siempre llega.
 // Los del CDN (wasm y modelo, que no cambian) van "primero cache".
-const CACHE = "mirada-v11";
+const CACHE = "mirada-v12";
 const LOCAL = ["./", "./index.html", "./app.js", "./mivoz.js", "./manifest.webmanifest",
                "./icon-192.png", "./icon-512.png"];
 

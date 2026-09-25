@@ -397,24 +397,40 @@ function pintar(){
 
   // Fila de arriba. En las frases lleva SÍ y NO bien grandes, para poder
   // responder sin salir del menú; en el teclado, las palabras sugeridas.
+  // Disposición de la fila de arriba:
+  //   ┌──────┬──────┬─────────┬─────────────┐
+  //   │  SÍ  │  NO  │ TECLADO │ BORRAR TODO │   ← altos, dos renglones
+  //   ├──────┴──────┤         │             │
+  //   │   FRASES    │         │             │
+  //   └─────────────┴─────────┴─────────────┘
   const enFrases = ["frases", "catfrases", "subfrases"].includes(S.vista);
   tira.classList.remove("oculta");
+  const pon = (c, area) => { c.nodo.style.gridArea = area; addT(c); };
+
   if(enFrases){
-    addT(celda("SÍ", {t:"frase", v:"Sí"}, "grande accion verde"));
-    addT(celda("NO", {t:"frase", v:"No"}, "grande accion rojo"));
-    addT(celda("TECLADO", {t:"teclado"}, "grande accion"));
+    tira.style.gridTemplateColumns = "1fr 1fr 1.15fr 1.15fr";
+    pon(celda("SÍ", {t:"frase", v:"Sí"}, "grande accion verde"), "1/1/2/2");
+    pon(celda("NO", {t:"frase", v:"No"}, "grande accion rojo"),  "1/2/2/3");
+    pon(celda("FRASES", {t:"frases"}, "grande accion"),          "2/1/3/3");
+    pon(celda("TECLADO", {t:"teclado"}, "grande accion"),        "1/3/3/4");
+    pon(celda(S.confirmar ? "¿SEGURO?" : "BORRAR TODO", {t:"limpiar"},
+              "grande accion rojo" + (S.confirmar ? " alerta" : "")), "1/4/3/5");
   } else {
+    // En el teclado, arriba van las palabras sugeridas; si no hay, SÍ y NO.
+    tira.style.gridTemplateColumns = "1fr 1fr 1.15fr 1.15fr";
     const RESP = ["Sí", "No"];
     for(let i=0;i<2;i++){
       const w = sug[i];
-      if(w) addT(celda(w, {t:"palabra", v:w}, "chica accion"));
-      else  addT(celda(RESP[i] === "Sí" ? "SÍ" : "NO", {t:"frase", v:RESP[i]},
-                       "grande accion " + (i === 0 ? "verde" : "rojo")));
+      const c = w ? celda(w, {t:"palabra", v:w}, "chica accion")
+                  : celda(RESP[i] === "Sí" ? "SÍ" : "NO", {t:"frase", v:RESP[i]},
+                          "grande accion " + (i === 0 ? "verde" : "rojo"));
+      pon(c, "1/" + (i + 1) + "/2/" + (i + 2));
     }
-    addT(celda("FRASES", {t:"frases"}, "grande accion"));
+    pon(celda("🔊 HABLAR", {t:"hablar"}, "grande accion verde"), "2/1/3/3");
+    pon(celda("FRASES", {t:"frases"}, "grande accion"),    "1/3/3/4");
+    pon(celda(S.confirmar ? "¿SEGURO?" : "BORRAR TODO", {t:"limpiar"},
+              "grande accion rojo" + (S.confirmar ? " alerta" : "")), "1/4/3/5");
   }
-  addT(celda(S.confirmar ? "¿SEGURO?" : "BORRAR TODO", {t:"limpiar"},
-             "chica accion rojo" + (S.confirmar ? " alerta" : "")));
 
   if(S.vista === "frases"){                       // menú de categorías
     // 9 categorías en 3x3: entran justas y el nombre largo cabe entero.
@@ -453,7 +469,7 @@ function pintar(){
     GRUPOS.forEach((g,i) => add(celda(g.join(" "), {t:"grupo", v:i}, "")));
     add(celda("ESPACIO", {t:"espacio"}, "chica accion", "␣"));
     add(celda("BORRAR",  {t:"borrar"},  "chica accion rojo", "⌫"));
-    add(celda("HABLAR",  {t:"hablar"},  "chica accion verde", "🔊"));
+    add(celda(".",       {t:"letra", v:"."}, ""));
   }
   else if(S.vista === "letras"){
     rejilla.style.gridTemplateColumns = "repeat(3,1fr)";
@@ -464,10 +480,11 @@ function pintar(){
   else {
     rejilla.style.gridTemplateColumns = "repeat(6,1fr)";
     rejilla.style.gridTemplateRows = "repeat(5,1fr)";
-    TECLADO.forEach(l => add(celda(l, {t:"letra", v:l}, "")));
-    add(celda("␣",  {t:"espacio"}, "accion", "espacio"));
-    add(celda("⌫",  {t:"borrar"},  "accion rojo", "borrar"));
-    add(celda("🔊", {t:"hablar"},  "accion verde", "hablar"));
+    TECLADO.forEach(l => add(celda(l, {t:"letra", v:l}, "")));   // 27
+    add(celda("␣", {t:"espacio"}, "accion", "espacio"));         // 28
+    add(celda("⌫", {t:"borrar"},  "accion rojo", "borrar"));     // 29
+    add(celda(".", {t:"letra", v:"."}, ""));                     // 30
+    // HABLAR no va aquí: está arriba, grande y a una sola mirada.
   }
   marcar();
 }

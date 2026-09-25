@@ -25,23 +25,29 @@ button{font-family:inherit;color:inherit}
 
 /* ---------- texto escrito ---------- */
 #barra{display:flex;align-items:stretch;gap:8px;flex:0 0 auto}
+/* Los controles de abajo: pequeños, para que la barra de texto ocupe todo
+   el ancho y el mensaje se lea de lejos. */
+#pie{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex:0 0 auto}
+#pie button{background:var(--card);border:2px solid var(--line);border-radius:11px;
+  padding:7px 16px;font-size:14px;font-weight:700;cursor:pointer}
+#pie #video{width:92px;margin-right:auto}
 #texto{flex:1;background:var(--card);border:2px solid var(--line);border-radius:14px;
-  padding:10px 16px;font-size:clamp(22px,4.4vh,40px);font-weight:600;line-height:1.2;
-  min-height:clamp(52px,9vh,84px);display:flex;align-items:center;overflow:hidden;word-break:break-word}
+  padding:10px 20px;font-size:clamp(24px,5vh,46px);font-weight:600;line-height:1.2;
+  min-height:clamp(58px,10vh,96px);display:flex;align-items:center;overflow:hidden;word-break:break-word}
 #texto .cursor{display:inline-block;width:3px;height:1em;background:var(--azul2);margin-left:3px;
   animation:blink 1s steps(2) infinite;vertical-align:-.12em}
 @keyframes blink{50%{opacity:0}}
 #texto.vacio{color:#9fb0bf;font-weight:500}
-.mini{flex:0 0 auto;display:flex;flex-direction:column;gap:6px;justify-content:center}
-.mini button{background:var(--card);border:2px solid var(--line);border-radius:12px;
-  padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer}
-#video{width:104px;border-radius:12px;transform:scaleX(-1);background:#000;display:none;flex:0 0 auto}
+#video{border-radius:10px;transform:scaleX(-1);background:#000;display:none;flex:0 0 auto}
 #video.on{display:block}
 
 /* ---------- rejilla ---------- */
-#tira{display:flex;gap:8px;flex:0 0 auto;height:clamp(72px,13vh,124px)}
+/* SÍ y NO arriba, FRASES abajo ocupando el ancho de los dos; al lado, los
+   botones altos. */
+#tira{display:grid;gap:8px;flex:0 0 auto;grid-template-rows:1fr 1fr;
+  height:clamp(120px,21vh,210px)}
 #tira.oculta{display:none}
-#tira .celda{flex:1;min-width:0}
+#tira .celda{min-width:0}
 #tira .celda .txt{font-size:clamp(12px,2.1vh,22px);letter-spacing:0;line-height:1.12}
 /* SÍ, NO, FRASES y TECLADO: los que más se usan, bien grandes */
 #tira .celda.grande{flex:1.35}
@@ -118,15 +124,15 @@ select{width:100%;padding:11px;border-radius:11px;border:2px solid var(--line);f
 <div id="app">
   <div id="barra">
     <div id="texto" class="vacio">Mira una casilla para empezar<span class="cursor"></span></div>
-    <video id="video" autoplay playsinline muted></video>
-    <div class="mini">
-      <button id="btnCal">Calibrar</button>
-      <button id="btnAjustes">Ajustes</button>
-      <button id="btnPausa">Pausar</button>
-    </div>
   </div>
   <div id="tira"></div>
   <div id="rejilla"></div>
+  <div id="pie">
+    <video id="video" autoplay playsinline muted></video>
+    <button id="btnCal">Calibrar</button>
+    <button id="btnAjustes">Ajustes</button>
+    <button id="btnPausa">Pausar</button>
+  </div>
 </div>
 
 <div id="punto"></div>
