@@ -30,14 +30,31 @@ Levanta un servidor y un enlace temporal por HTTPS (la cámara no funciona sin H
 3. Mirar una casilla y **sostener la mirada**: se llena de color y se selecciona.
 4. Todo se puede tocar con el dedo, para quien acompaña.
 
-**La app abre en las frases**, que es lo que más se usa. La barra del mensaje
-ocupa todo el ancho, y debajo va la fila de botones grandes:
+La app abre en una **pantalla de inicio** con todo en botones grandes:
+
+    ┌──────┬──────┬───────────────┐
+    │  SÍ  │  NO  │  BORRAR TODO  │
+    ├──────┴──────┼───────────────┤
+    │             │    TECLADO    │
+    │   FRASES    ├───────────────┤
+    │             │   CALIBRAR    │
+    │             ├───────┬───────┤
+    │             │AJUSTES│SEGUIR │
+    └─────────────┴───────┴───────┘
+
+**Calibrar, Ajustes y Pausar están aquí en grande a propósito**: así se eligen con
+la mirada, sin depender de que alguien los toque. Sí y No también, para responder
+sin entrar a ningún menú.
+
+Dentro de las frases y del teclado, la fila de arriba queda:
 
     ┌──────┬──────┬─────────┬─────────────┐
     │  SÍ  │  NO  │ TECLADO │ BORRAR TODO │
     ├──────┴──────┤         │             │
     │   FRASES    │         │             │
     └─────────────┴─────────┴─────────────┘
+
+(en el menú de categorías, ese botón dice INICIO)
 
 En el teclado la fila cambia sola: arriba las palabras sugeridas (o SÍ y NO si no
 hay ninguna), abajo **HABLAR** ancho, y al lado **FRASES** para volver.

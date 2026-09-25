@@ -15,7 +15,7 @@ const guardarCfg = () => localStorage.setItem("mirada.cfg", JSON.stringify(cfg))
 
 /* ============================ estado ============================ */
 const S = {
-  listo:false, pausa:true, vista:"frases", grupo:null, categoria:null, subfrases:null,
+  listo:false, pausa:true, vista:"inicio", grupo:null, categoria:null, subfrases:null,
   texto:"", cara:false, ultimaCara:0,
   rasgos:null, punto:{x:innerWidth/2,y:innerHeight/2},
   celda:null, desde:0, fuera:0, enfriando:0, parpadeoPrev:0, parpadeo:false,
@@ -373,7 +373,7 @@ function sugerencias(){
 }
 
 /* ============================ rejilla ============================ */
-const rejilla = $("#rejilla"), tira = $("#tira");
+const rejilla = $("#rejilla"), tira = $("#tira"), pie = $("#pie");
 let celdas = [];
 
 function disposicionActiva(){
@@ -403,6 +403,37 @@ function pintar(){
   //   ├──────┴──────┤         │             │
   //   │   FRASES    │         │             │
   //   └─────────────┴─────────┴─────────────┘
+  // ── Pantalla de inicio ──────────────────────────────────────────────────
+  //   ┌──────┬──────┬───────────────┐
+  //   │  SÍ  │  NO  │  BORRAR TODO  │
+  //   ├──────┴──────┼───────────────┤
+  //   │             │    TECLADO    │
+  //   │   FRASES    ├───────────────┤
+  //   │             │   CALIBRAR    │
+  //   │             ├───────┬───────┤
+  //   │             │AJUSTES│SEGUIR │
+  //   └─────────────┴───────┴───────┘
+  // Calibrar, Ajustes y Pausar están aquí en grande a propósito: así se pueden
+  // elegir con la mirada, sin depender de que alguien los toque.
+  if(S.vista === "inicio"){
+    tira.classList.add("oculta");
+    pie.classList.add("oculto");
+    rejilla.style.gridTemplateColumns = "1fr 1fr 1fr 1fr";
+    rejilla.style.gridTemplateRows = "1.5fr 1fr 1fr 1fr";
+    const ponR = (c, area) => { c.nodo.style.gridArea = area; add(c); };
+    ponR(celda("SÍ", {t:"frase", v:"Sí"}, "accion verde"), "1/1/2/2");
+    ponR(celda("NO", {t:"frase", v:"No"}, "accion rojo"),  "1/2/2/3");
+    ponR(celda(S.confirmar ? "¿SEGURO?" : "BORRAR TODO", {t:"limpiar"},
+               "accion rojo" + (S.confirmar ? " alerta" : "")), "1/3/2/5");
+    ponR(celda("FRASES",  {t:"frases"},  ""),              "2/1/5/3");
+    ponR(celda("TECLADO", {t:"teclado"}, "medio accion"),  "2/3/3/5");
+    ponR(celda("CALIBRAR",{t:"calibrar"},"medio accion"),  "3/3/4/5");
+    ponR(celda("AJUSTES", {t:"ajustes"}, "medio accion"),  "4/3/5/4");
+    ponR(celda(S.pausa ? "SEGUIR" : "PAUSAR", {t:"pausa"}, "medio accion"), "4/4/5/5");
+    marcar(); return;
+  }
+  pie.classList.remove("oculto");
+
   const enFrases = ["frases", "catfrases", "subfrases"].includes(S.vista);
   tira.classList.remove("oculta");
   const pon = (c, area) => { c.nodo.style.gridArea = area; addT(c); };
@@ -411,7 +442,9 @@ function pintar(){
     tira.style.gridTemplateColumns = "1fr 1fr 1.15fr 1.15fr";
     pon(celda("SÍ", {t:"frase", v:"Sí"}, "grande accion verde"), "1/1/2/2");
     pon(celda("NO", {t:"frase", v:"No"}, "grande accion rojo"),  "1/2/2/3");
-    pon(celda("FRASES", {t:"frases"}, "grande accion"),          "2/1/3/3");
+    pon(celda(S.vista === "frases" ? "INICIO" : "FRASES",
+              {t: S.vista === "frases" ? "inicio" : "frases"},
+              "grande accion"), "2/1/3/3");
     pon(celda("TECLADO", {t:"teclado"}, "grande accion"),        "1/3/3/4");
     pon(celda(S.confirmar ? "¿SEGURO?" : "BORRAR TODO", {t:"limpiar"},
               "grande accion rojo" + (S.confirmar ? " alerta" : "")), "1/4/3/5");
@@ -521,6 +554,12 @@ function ejecutar(a){
     // responder sí/no a lo que pregunten, sin volver a navegar.
     case "frase":    S.texto = a.v; verTexto(); hablar(a.v, true); break;
     case "teclado":  S.vista = "grupos"; S.grupo = null; break;
+    case "inicio":   S.vista = "inicio"; S.grupo = null; break;
+    case "calibrar": calibrar(); return;
+    case "ajustes":  $("#ajustes").classList.add("on"); S.pausa = true; return;
+    case "pausa":    S.pausa = !S.pausa;
+                     $("#btnPausa").textContent = S.pausa ? "Seguir" : "Pausar";
+                     break;
     case "letra":   S.texto += a.v; if(cfg.eco) hablar(a.v);
                     if(disposicionActiva() === "pasos") S.vista = "grupos"; break;
     case "palabra": S.texto = S.texto.replace(/([A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)$/, a.v) + " ";

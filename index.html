@@ -28,6 +28,7 @@ button{font-family:inherit;color:inherit}
 /* Los controles de abajo: pequeños, para que la barra de texto ocupe todo
    el ancho y el mensaje se lea de lejos. */
 #pie{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex:0 0 auto}
+#pie.oculto{display:none}
 #pie button{background:var(--card);border:2px solid var(--line);border-radius:11px;
   padding:7px 16px;font-size:14px;font-weight:700;cursor:pointer}
 #pie #video{width:92px;margin-right:auto}
@@ -67,6 +68,7 @@ button{font-family:inherit;color:inherit}
 .celda.accion{background:#f7fafc}
 .celda.verde .txt{color:var(--verde)} .celda.rojo .txt{color:var(--rojo)}
 .celda.chica .txt{font-size:clamp(15px,2.6vh,26px);font-weight:700;letter-spacing:0}
+.celda.medio .txt{font-size:clamp(18px,3.6vh,36px);font-weight:800;letter-spacing:.02em}
 .celda.apagada{opacity:.45}
 .celda.alerta{background:var(--rojo);border-color:#7d1015}
 .celda.alerta .txt{color:#fff}
